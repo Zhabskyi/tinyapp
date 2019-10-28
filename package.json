@@ -16,5 +16,8 @@
   "bugs": {
     "url": "https://github.com/Zhabskyi/tinyapp/issues"
   },
-  "homepage": "https://github.com/Zhabskyi/tinyapp#readme"
+  "homepage": "https://github.com/Zhabskyi/tinyapp#readme",
+  "dependencies": {
+    "express": "^4.17.1"
+  }
 }
