@@ -42,23 +42,18 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.post("/urls", (req, res) => {
-  console.log(req.body);  // Log the POST request body to the console
-  res.send("Ok");         // Respond with 'Ok' (we will replace this)
+  let shortURL = generateRandomString();
+  urlDatabase[shortURL] = req.body.longURL;
+  // console.log(req.body);  // Log the POST request body to the console
+  // console.log(urlDatabase);
+  res.redirect(`/urls/${shortURL}`)
 });
 
-// app.get("/hello", (req, res) => {
-//   let templateVars = { greeting: 'Hello World!' };
-//   res.render("hello_world", templateVars);
-// });
-
-// app.get("/set", (req, res) => {
-//   const a = 1;
-//   res.send(`a = ${a}`);
-//  });
- 
-//  app.get("/fetch", (req, res) => {
-//   res.send(`a = ${a}`);
-//  });
+app.get("/u/:shortURL", (req, res) => {
+  console.log(req.params);
+  const longURL = urlDatabase[req.params.shortURL] 
+  res.redirect(longURL);
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
