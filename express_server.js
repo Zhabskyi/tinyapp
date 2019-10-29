@@ -44,14 +44,17 @@ app.get("/urls.json", (req, res) => {
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
-  // console.log(req.body);  // Log the POST request body to the console
-  // console.log(urlDatabase);
   res.redirect(`/urls/${shortURL}`)
 });
 
 app.post("/urls/:shortURL/delete", (req, res) => {
   delete urlDatabase[req.params.shortURL];
   res.redirect('/urls');
+});
+
+app.post("/urls/:shortURL", (req, res) => {
+  urlDatabase[req.params.shortURL] = req.body.longURL;
+  res.redirect(`/urls`);
 });
 
 app.get("/u/:shortURL", (req, res) => {
