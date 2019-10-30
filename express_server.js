@@ -6,11 +6,21 @@ const PORT = 8080;
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(cookieParser());
+//app.use(morgan('dev'));
+// app.use(express.static('public'));
 
 app.set("view engine", "ejs");
 
-function generateRandomString() {
+const generateRandomString = () => {
   return Math.random().toString(36).substr(2, 6);
+}
+
+const isEmailExist = (object, email) => {
+  for (const key in object) {
+     if (Object.values(object[key]).indexOf(email) > -1) {
+       return true;
+     }
+  }
 }
 
 const urlDatabase = {
@@ -107,13 +117,49 @@ app.post("/urls/:shortURL", (req, res) => {
 
 app.post("/register", (req, res) => {
   const randomID = "id" + generateRandomString();
-  users[randomID] = {};
-  users[randomID]["id"] = randomID;
-  users[randomID]["email"] = req.body.email;
-  users[randomID]["password"] = req.body.password;
-  res.cookie('user_id',randomID);
-  res.redirect('/urls');
+  if (isEmailExist(users, req.body.email)) {
+    res.status(400).send("<h1>User email already exist!</h1>");
+  } else if (req.body.email && req.body.password) {
+    users[randomID] = {};
+    const { email, password } = req.body;
+    users[randomID]["id"] = randomID;
+    users[randomID]["email"] = email;
+    users[randomID]["password"] = password;
+    res.cookie('user_id',randomID);
+    res.redirect('/urls');
+  } else {
+    res.status(400).send("<h1>Opps! Something went wrong</h1><h3>Please fill up all information!</h3>");
+  }
 });
+
+app.post('\login', (req, res) => {
+  const { email, password } = req.body;
+  for (const userId of users) {
+    const user = users[userId];
+    if(user.email === email) {
+      if (user.password === password) {
+        //log user 
+
+      }
+      //password
+    }
+    //email doesnt exist send response
+  }
+  //final response
+})
+
+// app.get('*', (req, res) => {
+  //const = userIDd = req.cookie.userId;
+  // if (!userId) {
+   // res.redirect('/login')
+  //}
+  // const user = users[userId]
+    // if (!user) {
+   // res.redirect('/register')
+  //}
+  // const templeVars = user
+//   res.render('protected', templeVars)
+// });
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
