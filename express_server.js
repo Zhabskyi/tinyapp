@@ -51,6 +51,15 @@ app.get("/urls.json", (req, res) => {
   res.json(urlDatabase);
 });
 
+
+app.get("/register", (req, res) => {
+  let templateVars = {
+    username: req.cookies["username"],
+    urls: urlDatabase
+   };
+  res.render("register", templateVars);
+});
+
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
   urlDatabase[shortURL] = req.body.longURL;
