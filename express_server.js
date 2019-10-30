@@ -1,11 +1,16 @@
 const express = require("express");
 const app = express();
 const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session')
 const PORT = 8080;
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser());
+app.use(cookieParser()); // don't need it if we use cookieSession
+// app.use(cookieSession({
+//   name: 'session',
+//   keys: ['key1', 'key2']
+// }));
 //app.use(morgan('dev'));
 // app.use(express.static('public'));
 
@@ -46,27 +51,28 @@ app.get("/", (req, res) => {
 });
 
 app.get("/urls", (req, res) => {
-  let templateVars = {
-    username: req.cookies["username"],
+  templateVars = {
+    user: users[req.cookies["user_id"]],
     urls: urlDatabase
-   };
+    };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  let templateVars = {
-    username: req.cookies["username"],
+  templateVars = {
+    user: users[req.cookies["user_id"]],
     urls: urlDatabase
-   };
+    };
   res.render("urls_new", templateVars);
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  let templateVars = { 
-    username: req.cookies["username"],
+  templateVars = {
+    user: users[req.cookies["user_id"]],
+    urls: urlDatabase,
     shortURL: req.params.shortURL, 
     longURL: urlDatabase[req.params.shortURL] 
-  };
+   };
   res.render("urls_show", templateVars);
 });
 
@@ -81,11 +87,19 @@ app.get("/u/:shortURL", (req, res) => {
 });
 
 app.get("/register", (req, res) => {
-  let templateVars = {
-    username: req.cookies["username"],
+  templateVars = {
+    user: users[req.cookies["user_id"]],
     urls: urlDatabase
-   };
+    };
   res.render("register", templateVars);
+});
+
+app.get("/login", (req, res) => {
+  templateVars = {
+    user: users[req.cookies["user_id"]],
+    urls: urlDatabase
+    };
+  res.render("login", templateVars);
 });
 
 app.post("/urls", (req, res) => {
@@ -132,32 +146,39 @@ app.post("/register", (req, res) => {
   }
 });
 
-app.post('\login', (req, res) => {
+app.post('/login', (req, res) => {
   const { email, password } = req.body;
   for (const userId of users) {
     const user = users[userId];
-    if(user.email === email) {
+    if(isEmailExist(users, email)) {
       if (user.password === password) {
         //log user 
-
+        //res.cookie('userId', userId);
+        //req.session.userId = userId;
+        res.cookie('user_id',user.id);
+        res.redirect('/urls');
       }
       //password
     }
     //email doesnt exist send response
   }
   //final response
-})
+});
+
+// app.post('\logout', (req, res) => {
+//   res.
+// })
 
 // app.get('*', (req, res) => {
-  //const = userIDd = req.cookie.userId;
-  // if (!userId) {
-   // res.redirect('/login')
-  //}
-  // const user = users[userId]
-    // if (!user) {
-   // res.redirect('/register')
-  //}
-  // const templeVars = user
+//   const userId = req.session.userId;
+//   if (!userId) {
+//    res.redirect('/login')
+//   }
+//   const user = users[userId]
+//     if (!user) {
+//    res.redirect('/register')
+//   }
+//   const templeVars = {user}
 //   res.render('protected', templeVars)
 // });
 
