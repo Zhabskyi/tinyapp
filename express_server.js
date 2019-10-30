@@ -108,13 +108,9 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`)
 });
 
-app.post("/urls/login", (req, res) => {
-  res.cookie('username',req.body.username);
-  res.redirect('/urls')
-});
 
-app.post("/urls/logout", (req, res) => {
-  res.clearCookie('username');
+app.post("/logout", (req, res) => {
+  res.clearCookie('user_id');
   res.redirect('/urls')
 });
 
@@ -148,21 +144,27 @@ app.post("/register", (req, res) => {
 
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
-  for (const userId of users) {
+  let isPassworg = false;
+
+  for (const userId in users) {
     const user = users[userId];
     if(isEmailExist(users, email)) {
       if (user.password === password) {
         //log user 
         //res.cookie('userId', userId);
         //req.session.userId = userId;
+        isPassworg = true;
         res.cookie('user_id',user.id);
         res.redirect('/urls');
-      }
-      //password
-    }
-    //email doesnt exist send response
+    } 
   }
-  //final response
+}
+
+  if (!isEmailExist(users, email)) {
+    res.status(403).send("<h1>Email can not be found!</h1>");
+  } else if (!isPassworg && isEmailExist(users, email)) {
+    res.status(403).send("<h1>Password does not match!</h1>");
+  }
 });
 
 // app.post('\logout', (req, res) => {
