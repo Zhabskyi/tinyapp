@@ -33,10 +33,6 @@ const isEmailExist = (object, email) => {
   }
 }
 
-// const urlDatabase = {
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-// };
 let urlDatabase = {
   b6UTxQ: { longURL: "https://www.tsn.ca", userID: "user2RandomID" },
   i3BoGr: { longURL: "https://www.google.ca", userID: "user2RandomID" }
@@ -164,7 +160,7 @@ app.post("/register", (req, res) => {
 
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
-    
+
   for (const userId in users) {
     const user = users[userId];
       if (bcrypt.compareSync(password, user.password)  
@@ -177,7 +173,6 @@ app.post('/login', (req, res) => {
         res.redirect('/urls');
       }
   }
-  
   if (!isEmailExist(users, email)) {
     res.status(403).send("<h1>Email can not be found!</h1>");
   } else if (!isLoggin && isEmailExist(users, email)) {
