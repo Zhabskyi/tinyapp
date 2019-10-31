@@ -1,5 +1,7 @@
 const express = require("express");
+var methodOverride = require('method-override')
 const bcrypt = require("bcrypt");
+const bodyParser = require("body-parser");
 const cookieSession = require("cookie-session");
 const {
   getUserByEmail,
@@ -12,7 +14,7 @@ const { urlDatabase, users } = require("./config");
 const app = express();
 const PORT = 8080;
 
-const bodyParser = require("body-parser");
+app.use(methodOverride('_method'))
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cookieSession({
@@ -93,14 +95,14 @@ app.post("/urls", (req, res) => {
   res.redirect(`/urls/${shortURL}`);
 });
 
-app.post("/urls/:shortURL/delete", (req, res) => {
+app.delete("/urls/:shortURL/delete", (req, res) => {
   if (isLoggin(req.session.userId)) {
     delete urlDatabase[req.params.shortURL];
   }
   res.redirect("/urls");
 });
 
-app.post("/urls/:shortURL", (req, res) => {
+app.put("/urls/:shortURL", (req, res) => {
   if (isLoggin(req.session.userId)) {
     urlDatabase[req.params.shortURL] = {
       longURL: req.body.longURL,
