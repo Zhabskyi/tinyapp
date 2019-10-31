@@ -1,5 +1,5 @@
 const express = require("express");
-var methodOverride = require('method-override')
+var methodOverride = require("method-override");
 const bcrypt = require("bcrypt");
 const bodyParser = require("body-parser");
 const cookieSession = require("cookie-session");
@@ -14,7 +14,7 @@ const { urlDatabase, users } = require("./config");
 const app = express();
 const PORT = 8080;
 
-app.use(methodOverride('_method'))
+app.use(methodOverride("_method"));
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(
   cookieSession({
@@ -23,6 +23,7 @@ app.use(
   })
 );
 
+app.set("trust proxy", 1);
 app.set("view engine", "ejs");
 
 app.get("/", (req, res) => {
@@ -49,14 +50,14 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  // this check if user enter unvalid shortURL manualy in browser
   if (!urlDatabase[req.params.shortURL]) {
     res.render("index");
   } else {
     const templateVars = {
       user: users[req.session.userId],
       shortURL: req.params.shortURL,
-      longURL: urlDatabase[req.params.shortURL].longURL
+      longURL: urlDatabase[req.params.shortURL].longURL,
+      views: urlDatabase[req.params.shortURL].views
     };
     res.render("urls_show", templateVars);
   }
@@ -67,6 +68,12 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
+  for (const key in urlDatabase) {
+    if (key === req.params.shortURL) {
+      urlDatabase[req.params.shortURL].views += (req.session.views || 0) + 1;
+    }
+  }
+  //analitics.views =  req.session.views = (req.session.views || 0) + 1;
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
@@ -106,7 +113,8 @@ app.put("/urls/:shortURL", (req, res) => {
   if (isLoggin(req.session.userId)) {
     urlDatabase[req.params.shortURL] = {
       longURL: req.body.longURL,
-      userID: req.session.userId
+      userID: req.session.userId,
+      views: 0
     };
   }
   res.redirect("/urls");

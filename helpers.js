@@ -32,12 +32,14 @@ const checkUrlHeader = (long, short, userId, db) => {
   if (long.startsWith("https://") || long.startsWith("http://")) {
     db[short] = {
       longURL: long,
-      userID: userId
+      userID: userId,
+      views: 0
     };
   } else {
     db[short] = {
       longURL: `https://${long}`,
-      userID: userId
+      userID: userId,
+      views: 0
     };
   }
 };
