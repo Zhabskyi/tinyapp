@@ -1,6 +1,9 @@
 const express = require("express");
 const app = express();
 const cookieParser = require('cookie-parser');
+const bcrypt = require('bcrypt');
+const password1 = bcrypt.hashSync("purple-monkey-dinosaur", 10);
+const password2 = bcrypt.hashSync("123456", 10);
 const cookieSession = require('cookie-session')
 const PORT = 8080;
 
@@ -44,12 +47,12 @@ const users = {
   "userRandomID": {
     id: "userRandomID", 
     email: "user@example.com", 
-    password: "purple-monkey-dinosaur"
+    password: password1
   },
   "user2RandomID": {
     id: "user2RandomID", 
     email: "user2@example.com", 
-    password: "123456"
+    password:  password2
   },
 }
 
@@ -148,9 +151,10 @@ app.post("/register", (req, res) => {
   } else if (req.body.email && req.body.password) {
     users[randomID] = {};
     const { email, password } = req.body;
+    const hashedUserPassword = bcrypt.hashSync(password, 10);
     users[randomID]["id"] = randomID;
     users[randomID]["email"] = email;
-    users[randomID]["password"] = password;
+    users[randomID]["password"] = hashedUserPassword;
     res.cookie('user_id',randomID);
     res.redirect('/urls');
   } else {
@@ -160,10 +164,11 @@ app.post("/register", (req, res) => {
 
 app.post('/login', (req, res) => {
   const { email, password } = req.body;
-  
+    
   for (const userId in users) {
     const user = users[userId];
-      if (user.password === password && user.email === email) {
+      if (bcrypt.compareSync(password, user.password)  
+          && user.email === email) {
         //log user 
         //res.cookie('userId', userId);
         //req.session.userId = userId;
