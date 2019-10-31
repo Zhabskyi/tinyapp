@@ -8,6 +8,7 @@ const password2 = bcrypt.hashSync("123456", 10);
 const app = express();
 const PORT = 8080;
 
+// we need isLoggin variable for keeping server knows if user login that nobody could not change data from curl or postman
 let isLoggin = false;
 
 const bodyParser = require("body-parser");
@@ -80,12 +81,17 @@ app.get("/urls/new", (req, res) => {
 });
 
 app.get("/urls/:shortURL", (req, res) => {
-  const templateVars = {
-    user: users[req.session.user_id],
-    shortURL: req.params.shortURL,
-    longURL: urlDatabase[req.params.shortURL].longURL
-  };
-  res.render("urls_show", templateVars);
+  // this check if user enter unvalid shortURL manualy in browser
+  if (!urlDatabase[req.params.shortURL]) {
+    res.render("index");
+  } else {
+    const templateVars = {
+      user: users[req.session.user_id],
+      shortURL: req.params.shortURL,
+      longURL: urlDatabase[req.params.shortURL].longURL
+    };
+    res.render("urls_show", templateVars);
+  }
 });
 
 app.get("/urls.json", (req, res) => {
@@ -184,18 +190,17 @@ app.post("/logout", (req, res) => {
   res.redirect("/urls");
 });
 
-// app.get("*", (req, res) => {
-//   const userId = req.session.user_id;
-//   if (!userId) {
-//     res.redirect("/login");
-//   }
-//   const user = users[userId];
-//   if (!user) {
-//     res.redirect("/register");
-//   }
-// const templeVars = {user}
-// res.render('protected', templeVars)
-// });
+app.get("*", (req, res) => {
+  const userId = req.session.user_id;
+  if (!userId) {
+    res.redirect("/login");
+  }
+  const user = users[userId];
+  if (!user) {
+    res.redirect("/register");
+  }
+  res.render("index");
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
