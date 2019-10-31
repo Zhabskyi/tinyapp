@@ -6,6 +6,15 @@ const getUserByEmail = (email, database) => {
   }
 };
 
+const isLoggin = (userId) => {
+ if (userId) {
+  return true;
+ } else {
+   return false;
+ }
+}
+
 module.exports = {
-  getUserByEmail
+  getUserByEmail,
+  isLoggin
 };

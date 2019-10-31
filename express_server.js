@@ -1,15 +1,12 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const cookieSession = require("cookie-session");
-const { getUserByEmail } = require("./helpers");
+const { getUserByEmail, isLoggin } = require("./helpers");
 
 const password1 = bcrypt.hashSync("purple-monkey-dinosaur", 10);
 const password2 = bcrypt.hashSync("123456", 10);
 const app = express();
 const PORT = 8080;
-
-// we need isLoggin variable for keeping server knows if user login that nobody could not change data from curl or postman
-let isLoggin = false;
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -119,25 +116,41 @@ app.get("/login", (req, res) => {
 
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
-  urlDatabase[shortURL] = {
-    longURL: req.body.longURL,
-    userID: req.session.user_id
-  };
+
+  if (
+    req.body.longURL.startsWith("https://") ||
+    req.body.longURL.startsWith("http://")
+  ) {
+    urlDatabase[shortURL] = {
+      longURL: req.body.longURL,
+      userID: req.session.user_id
+    };
+  } else {
+    urlDatabase[shortURL] = {
+      longURL: `https://${req.body.longURL}`,
+      userID: req.session.user_id
+    };
+  }
+
   res.redirect(`/urls/${shortURL}`);
 });
 
+
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (isLoggin) {
+  if (isLoggin(req.session.user_id)) {
     delete urlDatabase[req.params.shortURL];
   }
   res.redirect("/urls");
 });
 
 app.post("/urls/:shortURL", (req, res) => {
-  if (isLoggin) {
+  if (isLoggin(req.session.user_id)) {
+    console.log(req.params.shortURL)
+    console.log(req.body.longURL)
+    console.log(req.session.user_id)
     urlDatabase[req.params.shortURL] = {
       longURL: req.body.longURL,
-      userID: req.cookies["user_id"]
+      userID: req.session.user_id
     };
   }
   res.redirect("/urls");
@@ -173,7 +186,6 @@ app.post("/login", (req, res) => {
 
   if (user) {
     if (bcrypt.compareSync(password, user.password)) {
-      isLoggin = true;
       req.session.user_id = user.id;
       res.redirect("/urls");
     } else {
@@ -185,7 +197,6 @@ app.post("/login", (req, res) => {
 });
 
 app.post("/logout", (req, res) => {
-  isLoggin = false;
   req.session = null;
   res.redirect("/urls");
 });
