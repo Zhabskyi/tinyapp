@@ -1,9 +1,11 @@
 const express = require("express");
-const app = express();
 const bcrypt = require("bcrypt");
+const cookieSession = require("cookie-session");
+const helpers = require("./helpers");
+
 const password1 = bcrypt.hashSync("purple-monkey-dinosaur", 10);
 const password2 = bcrypt.hashSync("123456", 10);
-const cookieSession = require("cookie-session");
+const app = express();
 const PORT = 8080;
 
 let isLoggin = false;
@@ -26,14 +28,6 @@ const generateRandomString = () => {
   return Math.random()
     .toString(36)
     .substr(2, 6);
-};
-
-const getUserByEmail = (email, database) => {
-  for (const key in database) {
-    if (database[key].email === email) {
-      return database[key];
-    }
-  }
 };
 
 let urlDatabase = {
@@ -150,7 +144,7 @@ app.post("/urls/:shortURL", (req, res) => {
 app.post("/register", (req, res) => {
   const randomID = "id" + generateRandomString();
 
-  if (getUserByEmail(req.body.email, users)) {
+  if (helpers.getUserByEmail(req.body.email, users)) {
     res.status(400).send("<h1>User email already exist!</h1>");
   } else if (req.body.email && req.body.password) {
     users[randomID] = {};
@@ -173,7 +167,7 @@ app.post("/register", (req, res) => {
 app.post("/login", (req, res) => {
   const { email, password } = req.body;
 
-  const user = getUserByEmail(email, users);
+  const user = helpers.getUserByEmail(email, users);
 
   if (user) {
     if (bcrypt.compareSync(password, user.password)) {
@@ -203,8 +197,8 @@ app.post("/logout", (req, res) => {
 //   if (!user) {
 //     res.redirect("/register");
 //   }
-  // const templeVars = {user}
-  // res.render('protected', templeVars)
+// const templeVars = {user}
+// res.render('protected', templeVars)
 // });
 
 app.listen(PORT, () => {
