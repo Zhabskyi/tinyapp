@@ -1,10 +1,14 @@
 const express = require("express");
 const bcrypt = require("bcrypt");
 const cookieSession = require("cookie-session");
-const { getUserByEmail, isLoggin } = require("./helpers");
-
-const password1 = bcrypt.hashSync("purple-monkey-dinosaur", 10);
-const password2 = bcrypt.hashSync("123456", 10);
+const {
+  getUserByEmail,
+  isLoggin,
+  userUrls,
+  checkUrlHeader,
+  generateRandomString
+} = require("./helpers");
+const { urlDatabase, users } = require("./config");
 const app = express();
 const PORT = 8080;
 
@@ -19,59 +23,24 @@ app.use(
 
 app.set("view engine", "ejs");
 
-const generateRandomString = () => {
-  return Math.random()
-    .toString(36)
-    .substr(2, 6);
-};
-
-let urlDatabase = {
-  b6UTxQ: { longURL: "https://www.tsn.ca", userID: "user2RandomID" },
-  i3BoGr: { longURL: "https://www.google.ca", userID: "user2RandomID" }
-};
-
-const users = {
-  userRandomID: {
-    id: "userRandomID",
-    email: "user@example.com",
-    password: password1
-  },
-  user2RandomID: {
-    id: "user2RandomID",
-    email: "user2@example.com",
-    password: password2
-  }
-};
-
 app.get("/", (req, res) => {
   res.render("index");
 });
 
 app.get("/urls", (req, res) => {
-  let privateDatabase = {};
-  if (req.session.user_id) {
-    for (const key in urlDatabase) {
-      if (urlDatabase[key].userID === req.session.user_id) {
-        privateDatabase = Object.assign(privateDatabase, {
-          [key]: urlDatabase[key]
-        });
-      }
-    }
-  }
-
   const templateVars = {
-    user: users[req.session.user_id],
-    urls: privateDatabase
+    user: users[req.session.userId],
+    urls: userUrls(req.session.userId, urlDatabase)
   };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.session.user_id) {
+  if (!req.session.userId) {
     res.redirect("/login");
   } else {
     const templateVars = {
-      user: users[req.session.user_id]
+      user: users[req.session.userId]
     };
     res.render("urls_new", templateVars);
   }
@@ -83,7 +52,7 @@ app.get("/urls/:shortURL", (req, res) => {
     res.render("index");
   } else {
     const templateVars = {
-      user: users[req.session.user_id],
+      user: users[req.session.userId],
       shortURL: req.params.shortURL,
       longURL: urlDatabase[req.params.shortURL].longURL
     };
@@ -102,55 +71,40 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/register", (req, res) => {
   const templateVars = {
-    user: users[req.session.user_id]
+    user: users[req.session.userId]
   };
   res.render("register", templateVars);
 });
 
 app.get("/login", (req, res) => {
   const templateVars = {
-    user: users[req.session.user_id]
+    user: users[req.session.userId]
   };
   res.render("login", templateVars);
 });
 
 app.post("/urls", (req, res) => {
-  let shortURL = generateRandomString();
+  const shortURL = generateRandomString();
+  const longURL = req.body.longURL;
+  const userId = req.session.userId;
 
-  if (
-    req.body.longURL.startsWith("https://") ||
-    req.body.longURL.startsWith("http://")
-  ) {
-    urlDatabase[shortURL] = {
-      longURL: req.body.longURL,
-      userID: req.session.user_id
-    };
-  } else {
-    urlDatabase[shortURL] = {
-      longURL: `https://${req.body.longURL}`,
-      userID: req.session.user_id
-    };
-  }
+  checkUrlHeader(longURL, shortURL, userId, urlDatabase);
 
   res.redirect(`/urls/${shortURL}`);
 });
 
-
 app.post("/urls/:shortURL/delete", (req, res) => {
-  if (isLoggin(req.session.user_id)) {
+  if (isLoggin(req.session.userId)) {
     delete urlDatabase[req.params.shortURL];
   }
   res.redirect("/urls");
 });
 
 app.post("/urls/:shortURL", (req, res) => {
-  if (isLoggin(req.session.user_id)) {
-    console.log(req.params.shortURL)
-    console.log(req.body.longURL)
-    console.log(req.session.user_id)
+  if (isLoggin(req.session.userId)) {
     urlDatabase[req.params.shortURL] = {
       longURL: req.body.longURL,
-      userID: req.session.user_id
+      userID: req.session.userId
     };
   }
   res.redirect("/urls");
@@ -168,7 +122,7 @@ app.post("/register", (req, res) => {
     users[randomID]["id"] = randomID;
     users[randomID]["email"] = email;
     users[randomID]["password"] = hashedUserPassword;
-    req.session.user_id = randomID;
+    req.session.userId = randomID;
     res.redirect("/urls");
   } else {
     res
@@ -186,7 +140,7 @@ app.post("/login", (req, res) => {
 
   if (user) {
     if (bcrypt.compareSync(password, user.password)) {
-      req.session.user_id = user.id;
+      req.session.userId = user.id;
       res.redirect("/urls");
     } else {
       res.status(403).send("<h1>Password does not match!</h1>");
@@ -202,7 +156,7 @@ app.post("/logout", (req, res) => {
 });
 
 app.get("*", (req, res) => {
-  const userId = req.session.user_id;
+  const userId = req.session.userId;
   if (!userId) {
     res.redirect("/login");
   }
@@ -214,5 +168,5 @@ app.get("*", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Example app listening on port ${PORT}!`);
+  console.log(`TinyApp app listening on port ${PORT}!`);
 });
