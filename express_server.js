@@ -11,11 +11,11 @@ let isLoggin = false;
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({extended: true}));
-app.use(cookieParser()); // don't need it if we use cookieSession
-// app.use(cookieSession({
-//   name: 'session',
-//   keys: ['key1', 'key2']
-// }));
+//app.use(cookieParser()); // don't need it if we use cookieSession
+app.use(cookieSession({
+  name: 'session',
+  keys: ['mykey1', 'mykey2']
+}));
 //app.use(morgan('dev'));
 // app.use(express.static('public'));
 
@@ -58,29 +58,28 @@ app.get("/", (req, res) => {
 
 app.get("/urls", (req, res) => {  
   let privateDatabase = {};
-  if (req.cookies["user_id"]) {
+  if (req.session.user_id) {
     for (const key in urlDatabase) {
-      if (urlDatabase[key].userID === req.cookies["user_id"]) { 
+      if (urlDatabase[key].userID === req.session.user_id) { 
         privateDatabase = Object
         .assign(privateDatabase,{ [key]: urlDatabase[key]});
       }
     }
-    //console.log(privateDatabase)
   }
   
   templateVars = {
-    user: users[req.cookies["user_id"]],
+    user: users[req.session.user_id],
     urls: privateDatabase
     };
   res.render("urls_index", templateVars);
 });
 
 app.get("/urls/new", (req, res) => {
-  if (!req.cookies["user_id"]) {
+  if (!req.session.user_id) {
     res.redirect('/login');
   } else {
     templateVars = {
-      user: users[req.cookies["user_id"]]
+      user: users[req.session.user_id]
       };
     res.render("urls_new", templateVars);
   }
@@ -88,7 +87,7 @@ app.get("/urls/new", (req, res) => {
 
 app.get("/urls/:shortURL", (req, res) => {
   templateVars = {
-    user: users[req.cookies["user_id"]],
+    user: users[req.session.user_id],
     shortURL: req.params.shortURL, 
     longURL: urlDatabase[req.params.shortURL].longURL
    };
@@ -107,21 +106,21 @@ app.get("/u/:shortURL", (req, res) => {
 
 app.get("/register", (req, res) => {
   templateVars = {
-    user: users[req.cookies["user_id"]],
+    user: users[req.session.user_id],
     };
   res.render("register", templateVars);
 });
 
 app.get("/login", (req, res) => {
   templateVars = {
-    user: users[req.cookies["user_id"]],
+    user: users[req.session.user_id],
     };
   res.render("login", templateVars);
 });
 
 app.post("/urls", (req, res) => {
   let shortURL = generateRandomString();
-  urlDatabase[shortURL] =  {longURL: req.body.longURL, userID: req.cookies["user_id"]};
+  urlDatabase[shortURL] =  {longURL: req.body.longURL, userID: req.session.user_id};
   res.redirect(`/urls/${shortURL}`)
 });
 
@@ -151,7 +150,7 @@ app.post("/register", (req, res) => {
     users[randomID]["id"] = randomID;
     users[randomID]["email"] = email;
     users[randomID]["password"] = hashedUserPassword;
-    res.cookie('user_id',randomID);
+    req.session.user_id = randomID;
     res.redirect('/urls');
   } else {
     res.status(400).send("<h1>Opps! Something went wrong</h1><h3>Please fill up all information!</h3>");
@@ -165,11 +164,8 @@ app.post('/login', (req, res) => {
     const user = users[userId];
       if (bcrypt.compareSync(password, user.password)  
           && user.email === email) {
-        //log user 
-        //res.cookie('userId', userId);
-        //req.session.userId = userId;
         isLoggin = true;
-        res.cookie('user_id',user.id);
+        req.session.user_id = user.id;
         res.redirect('/urls');
       }
   }
@@ -182,25 +178,22 @@ app.post('/login', (req, res) => {
 
 app.post("/logout", (req, res) => {
   isLoggin = false;
-  res.clearCookie('user_id');
+  req.session = null;
   res.redirect('/urls')
 });
-// app.post('\logout', (req, res) => {
-  //   res.
-  // })
 
-// app.get('*', (req, res) => {
-//   const userId = req.session.userId;
-//   if (!userId) {
-//    res.redirect('/login')
-//   }
-//   const user = users[userId]
-//     if (!user) {
-//    res.redirect('/register')
-//   }
-//   const templeVars = {user}
-//   res.render('protected', templeVars)
-// });
+app.get('*', (req, res) => {
+  const userId = req.session.user_id;
+  if (!userId) {
+   res.redirect('/login')
+  }
+  const user = users[userId]
+    if (!user) {
+   res.redirect('/register')
+  }
+  // const templeVars = {user}
+  // res.render('protected', templeVars)
+});
 
 app.listen(PORT, () => {
   console.log(`Example app listening on port ${PORT}!`);
