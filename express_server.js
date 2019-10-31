@@ -12,15 +12,12 @@ let isLoggin = false;
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.urlencoded({ extended: true }));
-//app.use(cookieParser()); // don't need it if we use cookieSession
 app.use(
   cookieSession({
     name: "session",
     keys: ["mykey1", "mykey2"]
   })
 );
-//app.use(morgan('dev'));
-// app.use(express.static('public'));
 
 app.set("view engine", "ejs");
 
@@ -49,7 +46,7 @@ const users = {
 };
 
 app.get("/", (req, res) => {
-  res.send("Our tiny web app is going to grow!");
+  res.render("index");
 });
 
 app.get("/urls", (req, res) => {
@@ -96,7 +93,6 @@ app.get("/urls.json", (req, res) => {
 });
 
 app.get("/u/:shortURL", (req, res) => {
-  console.log(req.params);
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
