@@ -63,17 +63,13 @@ app.get("/urls/:shortURL", (req, res) => {
   }
 });
 
-app.get("/urls.json", (req, res) => {
-  res.json(urlDatabase);
-});
-
 app.get("/u/:shortURL", (req, res) => {
   for (const key in urlDatabase) {
     if (key === req.params.shortURL) {
       urlDatabase[req.params.shortURL].views += (req.session.views || 0) + 1;
     }
   }
-  
+
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
