@@ -28,16 +28,16 @@ const userUrls = (userId, urlDatabase) => {
   return privateDatabase;
 };
 
-const checkUrlHeader = (long, short, userId, db) => {
-  if (long.startsWith("https://") || long.startsWith("http://")) {
-    db[short] = {
-      longURL: long,
+const checkUrlHeader = (longUrl, shortUrl, userId, db) => {
+  if (longUrl.startsWith("https://") || longUrl.startsWith("http://")) {
+    db[shortUrl] = {
+      longURL: longUrl,
       userID: userId,
       views: 0
     };
   } else {
-    db[short] = {
-      longURL: `https://${long}`,
+    db[shortUrl] = {
+      longURL: `https://${longUrl}`,
       userID: userId,
       views: 0
     };

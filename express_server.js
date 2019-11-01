@@ -73,7 +73,7 @@ app.get("/u/:shortURL", (req, res) => {
       urlDatabase[req.params.shortURL].views += (req.session.views || 0) + 1;
     }
   }
-  //analitics.views =  req.session.views = (req.session.views || 0) + 1;
+  
   const longURL = urlDatabase[req.params.shortURL].longURL;
   res.redirect(longURL);
 });
